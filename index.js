@@ -19,6 +19,7 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 // Set up mongoose models
 const User = require('./models/user');
 const Exercise = require('./models/exercise');
+const Log = require('./models/log');
 
 // Attach _id to request object
 app.param('_id', (req, res, next, id) => {
