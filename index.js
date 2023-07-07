@@ -20,6 +20,12 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 const User = require('./models/user');
 const Exercise = require('./models/exercise');
 
+// Attach _id to request object
+app.param('_id', (req, res, next, id) => {
+    req.id = id;
+    next();
+});
+
 // Get all users
 app.get('/api/users', async (req, res, next) => {
     try {
@@ -40,6 +46,31 @@ app.post('/api/users', async (req, res, next) => {
       res.json({
         username: userSaved.username,
         _id: userSaved._id
+      });
+    } catch (err) {
+      next(err);
+    }
+});
+
+// Create exercise
+app.post('/api/users/:_id/exercises', async (req, res, next) => {
+    const { description, duration, date } = req.body;
+    const dateFormatted = date ? new Date(date).toDateString() : new Date().toDateString();
+    try {
+      const user = await User.findOne({ _id: req.id });
+      const newExercise = new Exercise({
+        username: user.username,
+        description: description,
+        duration: duration,
+        date: dateFormatted
+      });
+      const savedExercise = await newExercise.save();
+      res.json({
+        _id: user._id,
+        username: user.username,
+        date: savedExercise.date,
+        duration: savedExercise.duration,
+        description: savedExercise.description 
       });
     } catch (err) {
       next(err);
