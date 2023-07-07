@@ -21,10 +21,16 @@ const User = require('./models/user');
 const Exercise = require('./models/exercise');
 const Log = require('./models/log');
 
-// Attach _id to request object
-app.param('_id', (req, res, next, id) => {
-    req.id = id;
-    next();
+// Attach _id and username to request object
+app.param('_id', async (req, res, next, id) => {
+    try {
+      req.id = id;
+      const { username } = await User.findOne({ _id: id });
+      req.username = username;
+      next();
+    } catch (err) {
+      next(err);
+    }
 });
 
 // Get all users
@@ -37,13 +43,27 @@ app.get('/api/users', async (req, res, next) => {
     }
 });
 
-// Create user
+// Get user logs
+app.get('/api/users/:_id/logs', async (req, res, next) => {
+    try {
+      const log = await Log.findOne({ username: req.username }, { __v: 0 });
+      res.json(log);
+    } catch (err) {
+      next(err);
+    }
+});
+
 app.post('/api/users', async (req, res, next) => {
+    const username = req.body.username;
     const newUser = new User({
-      username: req.body.username
+      username: username
+    });
+    const newLog = new Log({
+      username: username
     });
     try {
       const userSaved = await newUser.save();
+      await newLog.save();
       res.json({
         username: userSaved.username,
         _id: userSaved._id
@@ -58,17 +78,21 @@ app.post('/api/users/:_id/exercises', async (req, res, next) => {
     const { description, duration, date } = req.body;
     const dateFormatted = date ? new Date(date).toDateString() : new Date().toDateString();
     try {
-      const user = await User.findOne({ _id: req.id });
       const newExercise = new Exercise({
-        username: user.username,
+        username: req.username,
         description: description,
         duration: duration,
         date: dateFormatted
       });
       const savedExercise = await newExercise.save();
+      // Update user log with new exercise
+      await Log.updateOne(
+        { username: req.username },
+        { $push: { log: savedExercise },
+          $inc: { count: 1 }});
       res.json({
-        _id: user._id,
-        username: user.username,
+        _id: req.id,
+        username: req.username,
         date: savedExercise.date,
         duration: savedExercise.duration,
         description: savedExercise.description 
