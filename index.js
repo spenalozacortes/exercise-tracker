@@ -19,6 +19,22 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 // Set up mongoose models
 const User = require('./models/user');
 
+// Create user
+app.post('/api/users', async (req, res, next) => {
+    const newUser = new User({
+      username: req.body.username
+    });
+    try {
+      const userSaved = await newUser.save();
+      res.json({
+        username: userSaved.username,
+        _id: userSaved._id
+      });
+    } catch (err) {
+      next(err);
+    }
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
