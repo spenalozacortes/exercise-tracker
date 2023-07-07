@@ -19,6 +19,16 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 // Set up mongoose models
 const User = require('./models/user');
 
+// Get all users
+app.get('/api/users', async (req, res, next) => {
+    try {
+      const users = await User.find({}, {__v: 0});
+      res.send(users);
+    } catch (err) {
+      next(err);
+    }
+});
+
 // Create user
 app.post('/api/users', async (req, res, next) => {
     const newUser = new User({
