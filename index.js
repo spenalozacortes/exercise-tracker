@@ -45,14 +45,46 @@ app.get('/api/users', async (req, res, next) => {
 
 // Get user logs
 app.get('/api/users/:_id/logs', async (req, res, next) => {
+    const { from, to, limit } = req.query;
+    const unixFrom = new Date(from).getTime();
+    const unixTo = new Date(to).getTime();
     try {
-      const log = await Log.findOne({ username: req.username }, { __v: 0 });
-      res.json(log);
+      const logs = await Log.findOne({ username: req.username }, { __v: 0 });
+      let arr = [];
+      // If query, filter the log array
+      if (from && to) {
+        arr = logs.log.filter(log => {
+          const unixDate = new Date(log.date).getTime();
+          return unixDate >= unixFrom && unixDate <= unixTo; 
+        });    
+      } else if (from) {
+        arr = logs.log.filter(log => {
+          const unixDate = new Date(log.date).getTime();
+          return unixDate >= unixFrom;
+        });
+      } else if (to) {
+        arr = logs.log.filter(log => {
+          const unixDate = new Date(log.date).getTime();
+          return unixDate <= unixTo;
+        });
+      } else {
+        arr = logs.log;
+      }
+      if (limit) {
+        arr = arr.slice(0, Number(limit));
+      }
+      res.json({
+          username: logs.username,  
+          count: logs.count,
+          _id: logs._id,
+          log: arr
+      });
     } catch (err) {
       next(err);
     }
 });
 
+// Create user
 app.post('/api/users', async (req, res, next) => {
     const username = req.body.username;
     const newUser = new User({
