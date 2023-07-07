@@ -18,6 +18,7 @@ app.use(errorHandler());
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 // Set up mongoose models
 const User = require('./models/user');
+const Exercise = require('./models/exercise');
 
 // Get all users
 app.get('/api/users', async (req, res, next) => {
