@@ -33,6 +33,10 @@ app.param('_id', async (req, res, next, id) => {
     }
 });
 
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/views/index.html')
+});
+
 // Get all users
 app.get('/api/users', async (req, res, next) => {
     try {
